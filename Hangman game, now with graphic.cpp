@@ -1,84 +1,110 @@
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <vector>
+#include <string>
 #include <cstdlib>
 #include <ctime>
 
 using namespace std;
 
-const int MAX_WRONG = 8; // maximum number of incorrect guesses allowed
+void printHangman(int wrongGuesses) {
+    cout << "   +-----+\n";
+    cout << "   |     |\n";
+    cout << "   |     ";
+    if (wrongGuesses >= 1) cout << "O";
+    cout << endl;
+    cout << "   |    ";
+    if (wrongGuesses >= 3) cout << "/";
+    if (wrongGuesses >= 2) cout << "|";
+    if (wrongGuesses >= 4) cout << "\\";
+    cout << endl;
+    cout << "   |     ";
+    if (wrongGuesses >= 5) cout << "/";
+    cout << " ";
+    if (wrongGuesses >= 6) cout << "\\";
+    cout << endl;
+    cout << "   |\n";
+    cout << "  ===\n\n";
+}
 
 int main() {
-    srand(static_cast<unsigned int>(time(0)));
-
-    vector<string> words; // collection of possible words
-    ifstream file("keyword.txt");
-    if (file.is_open()) {
-        string word;
-        while (getline(file, word)) {
-            words.push_back(word);
-        }
-        file.close();
-    } else {
-        cerr << "Failed to open keyword file!" << endl;
-        return 1;
+    // Read in the keywords from a file
+    ifstream inFile;
+    inFile.open("keyword.txt");
+    if (!inFile) {
+        cerr << "Unable to open file keyword.txt";
+        exit(1);
     }
 
-    char playAgain = 'y';
-    while (playAgain == 'y') {
-        string word = words[rand() % words.size()]; // word to guess
-        int wrong = 0; // number of incorrect guesses
-        string soFar(word.length(), '-'); // word guessed so far
-        string used; // letters already guessed
+    vector<string> keywords;
+    string word;
+    while (inFile >> word) {
+        keywords.push_back(word);
+    }
+    inFile.close();
 
-        cout << "\nWelcome to Hangman. Good luck!\n";
+    // Set up the game
+    srand(time(nullptr));
+    string keyword = keywords[rand() % keywords.size()];
+    string hiddenKeyword(keyword.size(), '-');
+    int wrongGuesses = 0;
+    vector<char> guessedLetters;
 
-        // game loop
-        while ((wrong < MAX_WRONG) && (soFar != word)) {
-            cout << "\n\nYou have " << (MAX_WRONG - wrong) << " incorrect guesses left.\n";
-            cout << "\nYou've used the following letters:\n" << used << endl;
-            cout << "\nSo far, the word is:\n" << soFar << endl;
+    // Play the game
+    cout << "Welcome to Hangman!" << endl;
+    while (wrongGuesses < 6 && hiddenKeyword != keyword) {
+        // Print the current state of the game
+        cout << "Guess the word: " << hiddenKeyword << endl;
+        cout << "Guessed letters: ";
+        for (char c : guessedLetters) {
+            cout << c << " ";
+        }
+        cout << endl;
+        printHangman(wrongGuesses);
 
-            char guess;
-            cout << "\n\nEnter your guess: ";
-            cin >> guess;
-            guess = tolower(guess); // convert to lowercase
+        // Get the user's guess
+        cout << "Guess a letter: ";
+        char guess;
+        cin >> guess;
 
-            while (used.find(guess) != string::npos) {
-                cout << "\nYou've already guessed " << guess << endl;
-                cout << "Enter your guess: ";
-                cin >> guess;
-                guess = tolower(guess);
-            }
-
-            used += guess;
-
-            if (word.find(guess) != string::npos) {
-                cout << "\nThat's right! " << guess << " is in the word.\n";
-
-                // update soFar to include newly guessed letter
-                for (int i = 0; i < word.length(); ++i) {
-                    if (word[i] == guess) {
-                        soFar[i] = guess;
-                    }
-                }
-            } else {
-                cout << "\nSorry, " << guess << " isn't in the word.\n";
-                ++wrong;
+        // Check if the letter has already been guessed
+        bool alreadyGuessed = false;
+        for (char c : guessedLetters) {
+            if (c == guess) {
+                alreadyGuessed = true;
+                break;
             }
         }
+        if (alreadyGuessed) {
+            cout << "You already guessed that letter." << endl;
+            continue;
+        }
 
-        // game over
-        if (wrong == MAX_WRONG) {
-            cout << "\nYou've been hanged!";
+        // Add the letter to the list of guessed letters
+        guessedLetters.push_back(guess);
+
+        // Check if the guess is correct
+        bool correctGuess = false;
+        for (int i = 0; i < keyword.size(); i++) {
+            if (keyword[i] == guess) {
+                hiddenKeyword[i] = guess;
+                correctGuess = true;
+            }
+        }
+        if (correctGuess) {
+            cout << "Correct!" << endl;
         } else {
-            cout << "\nYou guessed it!";
+            cout << "Incorrect." << endl;
+            wrongGuesses++;
         }
+    }
 
-        cout << "\nThe word was " << word << "\n\n";
-        cout << "Do you want to play again? (y/n): ";
-        cin >> playAgain;
+    // Print the final state of the game
+    if (wrongGuesses == 6) {
+        cout << "You lose! The word was " << keyword << "." << endl;
+        printHangman(wrongGuesses);
+    } else {
+        cout << "Congratulations, you win! The word was " << keyword << "." << endl;
     }
 
     return 0;
