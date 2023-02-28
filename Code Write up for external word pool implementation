@@ -1,0 +1,87 @@
+Introduction
+The hangman game is a classic word-guessing game where players try to guess a word by suggesting letters within a certain number of tries. The word is usually obscured by blanks or underscores, and for each guess, the player is given feedback as to whether the guess is correct or incorrect.
+
+In this implementation of the hangman game, we will read in the keywords from a file called "keyword.txt" and allow the player to make guesses until they either correctly guess the word or make too many incorrect guesses.
+
+Implementation Details
+We start by including the necessary header files:
+            ```
+            #include <iostream>
+            #include <fstream>
+            #include <string>
+            #include <vector>
+            #include <algorithm>
+            #include <ctime>
+            #include <cstdlib>
+            ```
+Next, we define a constant "MAX_WRONG" to represent the maximum number of incorrect guesses the player can make:      
+            const int MAX_WRONG = 6; // maximum number of incorrect guesses
+We then seed the random number generator with the current time to ensure that the random word selection is truly random:
+            srand(static_cast<unsigned int>(time(0)));
+We read in the words from the file "keyword.txt" and store them in a vector called "words":
+            ```
+            vector<string> words;
+            ifstream file("keyword.txt");
+            if (file.is_open()) {
+                   string word;
+                   while (file >> word) {
+              words.push_back(word);
+             }
+              file.close();
+           } else {
+                  cerr << "Failed to open keyword file!" << endl;
+             return 1;
+           }
+           ```
+If the file cannot be opened, we print an error message and exit. Otherwise, we select a random word from the "words" vector:
+            ```
+            string target = words[rand() % words.size()];
+            ```
+We initialize the game state by creating a string "state" with the same length as the "target" word, but filled with underscores:
+            ```
+            string state(target.size(), '_');
+            ```
+We also initialize the number of incorrect guesses "numWrong" and the string of guessed letters "guesses" to empty:  
+            ```
+            int numWrong = 0;
+            string guesses;
+            ```
+We then enter the game loop, which allows the player to make guesses until they either correctly guess the word or make too many incorrect guesses:
+            ```
+            while (numWrong < MAX_WRONG && state != target) {
+                   // Print the current state of the game
+                       cout << "Word: " << state << endl;
+                         cout << "Guesses: " << guesses << endl;
+                          cout << "Number of wrong guesses left: " << MAX_WRONG - numWrong << endl;
+
+                  // Ask the player for a guess
+                        char guess;
+                        cout << "Enter a letter: ";
+                        cin >> guess;
+
+                 // Check if the guess is valid
+                        guess = tolower(guess);
+                             if (!isalpha(guess)) {
+                               cout << "Invalid guess! Please enter a letter." << endl;
+                                  continue;
+                  } else if (guesses.find(guess) != string::npos) {
+                         cout << "You already guessed that letter!" << endl;
+                                continue;
+                      }
+
+                   // Record the guess
+                                guesses += guess;
+
+                   // Check if the guess is correct
+                            bool correct = false;
+                              for (int i = 0; i < target.size(); i++) {
+                                 if (target[i] == guess) {
+                                  state[i] = guess;
+                                      correct = true;
+                    }
+                         }
+                           if (!correct) {
+                               numWrong++;
+                                     cout << "Wrong guess!" << endl;
+                                            } else {
+       
