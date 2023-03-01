@@ -33,7 +33,7 @@ We read in the words from the file "keyword.txt" and store them in a vector call
              return 1;
            }
            ```
-If the file cannot be opened, we print an error message and exit. Otherwise, we select a random word from the "words" vector:
+ If the file cannot be opened, we print an error message and exit. Otherwise, we select a random word from the "words" vector:
             ```
             string target = words[rand() % words.size()];
             ```
